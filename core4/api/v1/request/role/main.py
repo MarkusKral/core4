@@ -129,6 +129,7 @@ class RoleHandler(CoreRequestHandler):
             perm=self.get_argument(
                 "perm", as_type=list, default=[])
         )
+        self.logger.info("perm: " + str(kwargs['perm']))
         try:
             role = CoreRole(**kwargs)
             await role.save()
@@ -251,7 +252,11 @@ class RoleHandler(CoreRequestHandler):
                 'timestamp': '2018-11-15T06:20:31.763471'
             }
         """
-        if _id is None or _id.strip() == "":
+        if _id == "create":
+            return self.render("../standard/template/createRole.html")
+
+
+        elif _id is None or _id.strip() == "":
             ret = await CoreRole().load(
                 per_page=self.get_argument(
                     "per_page", as_type=int, default=10),
@@ -266,12 +271,23 @@ class RoleHandler(CoreRequestHandler):
             )
             for doc in ret.body:
                 doc.pop("password", None)
+
+            if self.wants_html():
+                return self.render("../standard/template/listRoles.html", roles=ret.body)
+
             self.reply(ret)
         else:
             oid = self.parse_objectid(_id)
             ret = await CoreRole().find_one(_id=oid)
             if ret is None:
                 raise HTTPError(404, "role [%s] not found", oid)
+
+            if self.wants_html():
+                body = await ret.detail()
+                if self.get_argument("edit", as_type=bool, default=False) == True:
+                    return self.render("../standard/template/editRole.html", role=body)
+                return self.render("../standard/template/listRole.html", role=body)
+
             self.reply(await ret.detail())
 
     async def put(self, _id):
