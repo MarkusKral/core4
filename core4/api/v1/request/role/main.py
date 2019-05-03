@@ -252,11 +252,8 @@ class RoleHandler(CoreRequestHandler):
                 'timestamp': '2018-11-15T06:20:31.763471'
             }
         """
-        if _id == "create":
-            return self.render("../standard/template/createRole.html")
 
-
-        elif _id is None or _id.strip() == "":
+        if _id is None or _id.strip() == "":
             ret = await CoreRole().load(
                 per_page=self.get_argument(
                     "per_page", as_type=int, default=10),
@@ -273,7 +270,7 @@ class RoleHandler(CoreRequestHandler):
                 doc.pop("password", None)
 
             if self.wants_html():
-                return self.render("../standard/template/listRoles.html", roles=ret.body)
+                return self.render("../standard/template/roles.js", roles=ret.body)
 
             self.reply(ret)
         else:
@@ -281,12 +278,6 @@ class RoleHandler(CoreRequestHandler):
             ret = await CoreRole().find_one(_id=oid)
             if ret is None:
                 raise HTTPError(404, "role [%s] not found", oid)
-
-            if self.wants_html():
-                body = await ret.detail()
-                if self.get_argument("edit", as_type=bool, default=False) == True:
-                    return self.render("../standard/template/editRole.html", role=body)
-                return self.render("../standard/template/listRole.html", role=body)
 
             self.reply(await ret.detail())
 
