@@ -197,6 +197,8 @@
                     this.roles = this.roles.filter(function(elem) {
                         return role._id !== elem._id
                     })
+                    this.isCreateDialogOpen = false;
+                    this.currentRole = null;
                     this.loading = false;
                 }.bind(this))
             },
