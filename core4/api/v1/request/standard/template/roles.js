@@ -82,15 +82,19 @@
 
                         </v-layout>
                     </v-form>
+                  <v-alert :value="error" type="error" dismissible>
+                      {{! error}}</br>
+                  </v-alert>
 
                 </v-card-text>
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="primary" @click="isCreateDialogOpen=false;currentRole=null;error=null;">Cancel</v-btn>
+                    <v-btn color="primary" @click="deleteRole(currentRole)">Delete</v-btn>
+                    <v-btn color="primary" @click="submit(currentRole)">submit</v-btn>
 
-                <v-btn @click="submit(currentRole)">submit</v-btn>
-                <v-btn @click="deleteRole(currentRole)">Delete</v-btn>
-                <v-btn @click="isCreateDialogOpen=false;currentRole=null;">Cancel</v-btn>
-
-            </v-card>
-
+                  <v-card-actions>
+                 </v-card>
         </v-dialog>
     </div>
 </body>
@@ -118,21 +122,11 @@
             console.log(role)
             console.warn("updating role", role.name)
             return axios.put('/core4/api/v1/roles/' + role._id, role)
-                .then(
-                    function(result) {
-                        return result.data.data
-                    }
-                )
         },
         createRole: function(role) {
             console.log(role)
             console.warn("updating role", role.name)
-            return axios.post('/core4/api/v1/roles', role)
-                .then(
-                    function(result) {
-                        return result.data.data
-                    }
-                )
+            return axios.post('/core4/api/v1/roles', role);
         }
     }
     var app = new Vue({
@@ -153,7 +147,7 @@
                         value: 'is_active'
                     }, {
                         text: 'Role',
-                        value: 'role'
+                        value: 'role        '
                     },
                     {
                         text: 'Perm',
@@ -171,7 +165,8 @@
                 isCreateDialogOpen: false,
                 roles: [],
                 currentRole: null,
-                loading: false
+                loading: false,
+                error: null
             }
         },
         beforeCreate: function() {
@@ -185,7 +180,6 @@
             }.bind(this))
         },
         computed: {
-            roles2: function() {},
         },
         watch: {
         },
@@ -217,6 +211,10 @@
                             this.isCreateDialogOpen = false;
                             this.loading = false;
                         }.bind(this))
+                        .catch(function(error){
+                            console.log(error);
+                            this.error=error.response.data.error.split("File")[0];
+                        }.bind(this))
                 } else {
                     this.loading = true;
                     api.createRole(roles)
@@ -227,6 +225,11 @@
                             this.isCreateDialogOpen = false;
                             this.loading = false;
                         }.bind(this))
+                        .catch(function(error){
+                            console.log(error);
+                            this.error=error.response.data.error.split("File")[0];
+                        }.bind(this))
+
                 }
             },
             updateRoles: function(role) {
