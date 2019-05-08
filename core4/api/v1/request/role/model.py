@@ -298,8 +298,7 @@ class CoreRole(CoreBase):
         doc.pop("password", None)
         return doc
 
-    async def load(self, per_page=10, current_page=0, sort_by="_id",
-                   sort_order=1, query_filter={}, user=None, role=None):
+    async def load(self, skip=0, limit=0, filter={}, sort_by="_id"):
         """
         Retrieve a list of roles in the specified sort order applying optional
         search filters. This method uses core4's :class:`.CorePager`.
@@ -316,27 +315,25 @@ class CoreRole(CoreBase):
         :return: :class:`.PageResult`
         """
 
-        async def _length(filter):
-            return await self.role_collection.count_documents(filter)
+        cur = self.role_collection.find(filter)\
+            .skip(skip)\
+            .limit(limit)
 
-        async def _query(skip, limit, filter, sort_by):
-            cur = self.role_collection.find(
-                filter).sort(*sort_by).skip(skip).limit(limit)
-            return await cur.to_list(length=limit)
+        return await cur.to_list(length=100)
 
-        if ((user or role) and (not (user and role))):
-            if user:
-                query_filter["email"] = {"$exists": True}
-            if role:
-                query_filter["email"] = {"$exists": False}
+        # if ((user or role) and (not (user and role))):
+        #     if user:
+        #         query_filter["email"] = {"$exists": True}
+        #     if role:
+        #         query_filter["email"] = {"$exists": False}
 
-        pager = CorePager(per_page=per_page,
-                          current_page=current_page,
-                          length=_length, query=_query,
-                          sort_by=[sort_by, sort_order],
-                          filter=query_filter)
-        page = await pager.page()
-        return page
+        # pager = CorePager(per_page=per_page,
+        #                   current_page=current_page,
+        #                   length=_length, query=_query,
+        #                   sort_by=[sort_by, sort_order],
+        #                   filter=query_filter)
+        # page = await pager.page()
+        # return page
 
     async def load_one(self, **kwargs):
         """
@@ -345,10 +342,13 @@ class CoreRole(CoreBase):
 
         :return: dict of user/role attributes
         """
-        ret = await self.load(per_page=1, current_page=0, query_filter=kwargs)
-        if ret.body:
-            return ret.body[0]
+        ret = await self.load(filter=kwargs)
+        if ret:
+            return ret[0]
         return None
+
+    async def count(self, filter={}):
+        return await self.role_collection.count_documents(filter)
 
     @classmethod
     async def _find_one(cls, **kwargs):
