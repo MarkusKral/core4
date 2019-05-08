@@ -512,10 +512,8 @@ class RoleHandler(CoreRequestHandler):
             #     "user", as_type=dict, default=True),
             # role=self.get_argument(
             #     "role", as_type=dict, default=True),
-            sort_by=self.get_argument(
-                "sort", as_type=str, default="_id"),
-            sort_order=self.get_argument(
-                "order", as_type=int, default=1),
+            sort_by=(self.get_argument("sort", as_type=str, default="_id"),
+                     self.get_argument("order", as_type=int, default=1)),
             query=_query,
             length=_length
         )

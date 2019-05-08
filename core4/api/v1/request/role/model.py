@@ -298,13 +298,14 @@ class CoreRole(CoreBase):
         doc.pop("password", None)
         return doc
 
-    async def load(self, skip=0, limit=0, filter={}, sort_by="_id"):
+    async def load(self, skip=0, limit=0, filter={}, sort_by=("_id", 1)):
         """
         Retrieve a list of roles in the specified sort order applying optional
         search filters. This method uses core4's :class:`.CorePager`.
 
         :param per_page: number of records per page
         :param current_page: to retrieve
+        todo: nope
         :param sort_by: single sort attribute
         :param sort_order: ascending (1) or descending (-1)
         :param query_filter: MongoDB query dict
@@ -316,6 +317,7 @@ class CoreRole(CoreBase):
         """
 
         cur = self.role_collection.find(filter)\
+            .sort(*sort_by)\
             .skip(skip)\
             .limit(limit)
 
