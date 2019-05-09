@@ -14,7 +14,7 @@ import core4.util.crypt
 import core4.util.node
 from core4.api.v1.request.role.field import *
 from core4.base.main import CoreBase
-from core4.util.pager import CorePager
+import json
 
 ALPHANUM = re.compile(r'^[a-zA-Z0-9_.-]+$')
 EMAIL = re.compile(r'^[_a-z0-9-]+(\.[_a-z0-9-]+)*'
@@ -303,39 +303,24 @@ class CoreRole(CoreBase):
         Retrieve a list of roles in the specified sort order applying optional
         search filters. This method uses core4's :class:`.CorePager`.
 
-        :param per_page: number of records per page
-        :param current_page: to retrieve
-        todo: nope
-        :param sort_by: single sort attribute
-        :param sort_order: ascending (1) or descending (-1)
-        :param query_filter: MongoDB query dict
-        :param user: if ``True`` retrieves only user roles with email and
-                     password
-        :param role: if ``True`` retrieves only roles without email and
-                     password
-        :return: :class:`.PageResult`
+        :param skip: number of documents to skip
+        :param sort_by: tuple of attribute and sort order (``1`` for ascending,
+                        ``-1`` for descending)
+        :param filter: MongoDB query dict
+        :param limit: number of records to be retrieved
+        :return: :list: resulting documents
         """
+
+
+        filter = await self.manage_filter(filter)
 
         cur = self.role_collection.find(filter)\
             .sort(*sort_by)\
             .skip(skip)\
             .limit(limit)
 
-        return await cur.to_list(length=100)
-
-        # if ((user or role) and (not (user and role))):
-        #     if user:
-        #         query_filter["email"] = {"$exists": True}
-        #     if role:
-        #         query_filter["email"] = {"$exists": False}
-
-        # pager = CorePager(per_page=per_page,
-        #                   current_page=current_page,
-        #                   length=_length, query=_query,
-        #                   sort_by=[sort_by, sort_order],
-        #                   filter=query_filter)
-        # page = await pager.page()
-        # return page
+        # None will exhaust the whole cursor. no buffering needed here.
+        return await cur.to_list(length=None)
 
     async def load_one(self, **kwargs):
         """
@@ -350,6 +335,7 @@ class CoreRole(CoreBase):
         return None
 
     async def count(self, filter={}):
+        filter = await self.manage_filter(filter)
         return await self.role_collection.count_documents(filter)
 
     @classmethod
@@ -529,3 +515,48 @@ class CoreRole(CoreBase):
         doc["role"] = sorted([r.name for r in await self.casc_role()
                               if r.name != self.name])
         return doc
+# todo: document methods
+    async def manage_filter(self, filter):
+        if filter and isinstance(filter, str):
+            if filter.startswith("{") and filter.endswith("}"):
+                try:
+                    query_filter = json.loads(filter)
+                    query_filter = await self.manage_dict_filter(query_filter)
+                except:
+                    raise core4.error.ArgumentParsingError("Can not parse regex" + filter)
+
+                filter = query_filter
+            else:
+                filter = re.compile(filter)
+                query_filter = \
+                    {
+                        "$or": [
+                            {"name": filter},
+                            {"realname": filter},
+                            {"perm": filter}
+                        ]
+                    }
+                filter = query_filter
+        return filter
+
+
+    async def manage_dict_filter(self, filter):
+        for k,v in filter.items():
+            temp = {}
+            if isinstance(v, str):
+                if re.match("^[a-zA-Z0-9_/-]*$", v):
+                    pass
+                else:
+                    filter[k] = re.compile(v)
+            elif isinstance(v, dict):
+                filter[k] = await self.manage_dict_filter(v)
+            elif isinstance(v, list):
+                tmpl = []
+                for i in v:
+                    tempitem = await self.manage_dict_filter({"j": i})
+                    tmpl.append(tempitem["j"])
+                filter[k] = tmpl
+
+        return filter
+
+

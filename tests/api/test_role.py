@@ -379,6 +379,33 @@ async def test_empty(core4api):
     rv = await core4api.get("/core4/api/v1/roles/" + oid)
     assert rv.code == 404
 
+async def test_nested_regex(core4api):
+    await core4api.login()
+    names = ['Liese', 'Lisa', 'Lieselotte', 'Hans']
+    for i in range(1, 4):
+        data = {
+            "name": "test_role_%03d" % i,
+            "realname": names.pop(0),
+        }
+        rv = await core4api.post("/core4/api/v1/roles", body=data)
+        assert rv.json()["code"] == 200
+    rv = await core4api.get(
+        '/core4/api/v1/roles?per_page=3&sort=realname&order=-1'
+        '&filter={"realname": {"$in": ["Li*"]}}'
+    )
+    assert rv.code == 200
+    ret = rv.json()
+    assert ret["total_count"] == 3
+    rv = await core4api.get(
+        '/core4/api/v1/roles?per_page=3&sort=realname&order=-1'
+        '&filter={"realname": {"$in": ["Liese"]}}'
+    )
+    assert rv.code == 200
+    ret = rv.json()
+    assert rv.code == 200
+    assert ret["total_count"] == 1
+
+
 
 async def test_delete(core4api):
     await core4api.login()

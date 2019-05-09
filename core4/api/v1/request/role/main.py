@@ -14,7 +14,6 @@ from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.request.role.model import CoreRole
 from core4.api.v1.request.role.access.manager import CoreAccessManager
 from core4.util.pager import CorePager
-import re
 
 
 class RoleHandler(CoreRequestHandler):
@@ -479,21 +478,6 @@ class RoleHandler(CoreRequestHandler):
         async def _length(filter):
             return await rolemanager.count(
                 filter=filter
-                    # per_page=self.get_argument(
-                    #     "per_page", as_type=int, default=10),
-                    # current_page=self.get_argument(
-                    #     "page", as_type=int, default=0),
-                    # filter=self.get_argument(
-                    #     "filter", as_type=dict, default={}),
-                    # user=self.get_argument(
-                    #     "user", as_type=dict, default=True),
-                    # role=self.get_argument(
-                    #     "role", as_type=dict, default=True)
-
-                    # sort_by=self.get_argument(
-                    #     "sort", as_type=str, default="_id"),
-                    # sort_order=self.get_argument(
-                    #     "order", as_type=int, default=1),
                 )
 
 
@@ -507,11 +491,7 @@ class RoleHandler(CoreRequestHandler):
             current_page=self.get_argument(
                 "page", as_type=int, default=0),
             filter=self.get_argument(
-                "filter", as_type=dict, default={}),
-            # user=self.get_argument(
-            #     "user", as_type=dict, default=True),
-            # role=self.get_argument(
-            #     "role", as_type=dict, default=True),
+                "filter", as_type=str, default="{}"),
             sort_by=(self.get_argument("sort", as_type=str, default="_id"),
                      self.get_argument("order", as_type=int, default=1)),
             query=_query,
