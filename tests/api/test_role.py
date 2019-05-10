@@ -404,6 +404,32 @@ async def test_nested_regex(core4api):
     ret = rv.json()
     assert rv.code == 200
     assert ret["total_count"] == 1
+    rv = await core4api.get(
+        '/core4/api/v1/roles?per_page=3&sort=realname&order=-1'
+        '&filter={"realname": {"$in": ["L*"]}, "name": "test_role_001"}'
+    )
+    assert rv.code == 200
+    ret = rv.json()
+    assert rv.code == 200
+    assert ret["total_count"] == 1
+    rv = await core4api.get(
+        '/core4/api/v1/roles?per_page=3&sort=realname&order=-1'
+        '&filter={"realname": {"$in": ["Lies*", "Lisa"]}}'
+    )
+    assert rv.code == 200
+    ret = rv.json()
+    assert rv.code == 200
+    assert ret["total_count"] == 3
+    rv = await core4api.get(
+        '/core4/api/v1/roles?per_page=3&sort=realname&order=-1'
+        '&filter={"$and":[{"realname":{"$in": ["L*"]}}, '
+        '{"realname":{"$ne":["Lisa"]}}]}'
+    )
+    assert rv.code == 200
+    ret = rv.json()
+    assert rv.code == 200
+    assert ret["total_count"] == 2
+
 
 
 
