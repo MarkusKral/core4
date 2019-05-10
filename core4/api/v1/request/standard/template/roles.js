@@ -124,12 +124,12 @@
 
                     <v-form>
                         <v-layout class="pa-3 pl-5" column>
-                            <v-text-field v-model="currentRole.name" label="name"> </v-text-field>
+                            <v-text-field v-model="currentRole.name" label="Name"> </v-text-field>
                             <v-text-field v-model="currentRole.realname" label="Realname" required></v-text-field>
                             <v-text-field v-model="currentRole.email" label="E-Mail"></v-text-field>
-                            <v-text-field v-model="currentRole.perm" label="Permissions"></v-text-field>
+                            <v-combobox multiple small-chips v-model="currentRole.perm" label="Permissions"></v-combobox>
+                            <v-combobox multiple small-chips v-model="currentRole.role" label="Role"></v-combobox>
                             <v-checkbox v-model="currentRole.is_active" label="Active"></v-checkbox>
-
                         </v-layout>
                     </v-form>
                   <v-alert :value="error" type="error" dismissible>
@@ -284,7 +284,7 @@
                     api.submitRole(roles)
                         .then(function(success) {
                             console.warn(success)
-                            this.updateRoles(success);
+                            this.updateRoles(success.data.data);
                             this.currentRole = null;
                             this.isCreateDialogOpen = false;
                             this.loading = false;
