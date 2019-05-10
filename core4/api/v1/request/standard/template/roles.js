@@ -51,7 +51,7 @@
                     </v-card-title>
                     <v-data-table flat v-if="roles" :loading="loading"
                     :pagination.sync="pagination"
-                    :rows-per-page-items="[2,15,30,70, {'text':'All','value':-1}]"
+                    :rows-per-page-items="[10, 25, 75]"
                     :total-items="pagination.totalItems"
                     :headers="headers"
                     :items="roles"
@@ -59,9 +59,9 @@
                     class="elevation-1">
 
                         <template v-slot:items="props">
-                            <td>{{! props.item.name }}</td>
-                            <td class="text-xs-right">{{! props.item.realname }}</td>
-                            <td class="text-xs-right">
+                            <td class="text-xs-center">{{! props.item.name }}</td>
+                            <td class="text-xs-center">{{! props.item.realname }}</td>
+                            <td class="text-xs-center">
                                 <v-icon v-if="props.item.is_active" small class="success--text">
                                     check
                                 </v-icon>
@@ -69,11 +69,16 @@
                                     remove_circle_outline
                                 </v-icon>
                             </td>
-                            <td class="text-xs-right"><pre>{{! props.item.role }}</pre>
+                            <td class="text-xs-center">
+                                 <div v-if="props.item.role.length" v-for="role in props.item.role">
+                                     {{! role }} </br>
+                                 </div>
                             </td>
-                            <td class="text-xs-right"><pre>{{! props.item.perm }}</pre>
+                            <td class="text-xs-center">
+                                <div v-if="props.item.perm.length" v-for="perm in props.item.perm">
+                                    {{! perm }} </br>
+                                </div>
                             </td>
-                            <td class="text-xs-right">{{! props.item.updated }}</td>
                             <td class="text-xs-right">
                                 <v-layout row style="border: 1px solid;">
                                     <v-flex xs4>
@@ -182,29 +187,30 @@
             return {
                 headers: [{
                         text: 'Name',
-                        align: 'left',
-                        value: 'name'
+                        value: 'name',
+                        align: 'center'
                     }, {
                         text: 'Realname',
                         value: 'realname',
+                        align: 'center',
                     }, {
                         text: 'Active',
-                        value: 'is_active'
+                        value: 'is_active',
+                        align: 'center'
                     }, {
                         text: 'Role',
-                        value: 'role        '
+                        value: 'role',
+                        align: 'center'
                     },
                     {
                         text: 'Perm',
-                        value: 'perm'
-                    }, {
-                        text: 'Updated',
-                        value: 'updated'
+                        value: 'perm',
+                        align: 'center'
                     }, {
                         text: 'Actions',
                         value: '',
                         sortable: false,
-                        align: 'right'
+                        align: 'center'
                     }
                 ],
                 isCreateDialogOpen: false,
@@ -216,10 +222,10 @@
                 bigSearch: false,
                 pagination: {
                     page: 1,
-                    rowsPerPage: 2,
+                    rowsPerPage: 25,
                     totalItems: 0,
                     sortBy: "_id",
-                    descending: false,
+                    descending: true,
                 }
             }
         },
@@ -243,7 +249,7 @@
             "?per_page="+ this.pagination.rowsPerPage +
             "&page=" + (this.pagination.page -1 )+
             "&order=" + (this.pagination.descending ? -1:1) +
-            "&order_by=" + this.pagination.sortBy
+            "&sort=" + this.pagination.sortBy
 
             if(this.searchData){
                 ret = ret + "&filter=" + this.searchData
