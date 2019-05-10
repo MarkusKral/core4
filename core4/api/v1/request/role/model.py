@@ -515,16 +515,26 @@ class CoreRole(CoreBase):
         doc["role"] = sorted([r.name for r in await self.casc_role()
                               if r.name != self.name])
         return doc
-# todo: document methods
+
     async def manage_filter(self, filter):
+        """
+        If given a dict by backend, returns that dict.
+        If given a string:
+         * is the string a dict representation: try to convert
+         * if not, assume its full text search
+        Pass regex handling to :meth: `.manage_dict_filter`.
+
+        :param filter: query string
+        :return: mongodb query filter
+        """
         if filter and isinstance(filter, str):
             if filter.startswith("{") and filter.endswith("}"):
                 try:
                     query_filter = json.loads(filter)
                     query_filter = await self.manage_dict_filter(query_filter)
                 except:
-                    raise core4.error.ArgumentParsingError("Can not parse regex" + filter)
-
+                    raise core4.error.ArgumentParsingError("Can not parse regex"
+                                                           + filter)
                 filter = query_filter
             else:
                 filter = re.compile(filter)
@@ -539,10 +549,18 @@ class CoreRole(CoreBase):
                 filter = query_filter
         return filter
 
+    async def manage_dict_filter(self, filter={"_id": ".*"}):
+        """
+        Takes a given dict and translates it to a mongodb query dict.
+        Will compile strings to regex where needed.
 
-    async def manage_dict_filter(self, filter):
+        It does not try to convert types, so:
+        "True" or "False" will still be strings.
+
+        :param filter: query dict
+        :return: mongodb query dict.
+        """
         for k,v in filter.items():
-            temp = {}
             if isinstance(v, str):
                 if re.match("^[a-zA-Z0-9_/-]*$", v):
                     pass
@@ -556,7 +574,6 @@ class CoreRole(CoreBase):
                     tempitem = await self.manage_dict_filter({"j": i})
                     tmpl.append(tempitem["j"])
                 filter[k] = tmpl
-
         return filter
 
 

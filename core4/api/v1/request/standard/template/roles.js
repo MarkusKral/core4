@@ -41,15 +41,23 @@
                             prepend-icon="loupe"
                             append-icon="search"
                             label="Search"
-                            @keyup.enter="search"
+                            @keyup.enter="update"
                             single-line
                             clearable
                             hide-details
-                            @click:append="search"
+                            @click:append="update"
                             @click:prepend="bigSearch=!bigSearch"
                         ></v-text-field>
                     </v-card-title>
-                    <v-data-table flat v-if="roles" :loading="loading" :rows-per-page-items="[15,30,70, {'text':'All','value':-1}]" :headers="headers" :items="roles" class="elevation-1">
+                    <v-data-table flat v-if="roles" :loading="loading"
+                    :pagination.sync="pagination"
+                    :rows-per-page-items="[2,15,30,70, {'text':'All','value':-1}]"
+                    :total-items="pagination.totalItems"
+                    :headers="headers"
+                    :items="roles"
+                    @update:pagination="update"
+                    class="elevation-1">
+
                         <template v-slot:items="props">
                             <td>{{! props.item.name }}</td>
                             <td class="text-xs-right">{{! props.item.realname }}</td>
@@ -83,6 +91,10 @@
                                     </v-flex>
                                 </v-layout>
                             </td>
+                        </template>
+                        <template v-slot:pageText="props">
+                        <pre>{{! props }}</pre>
+                            {{! props.pageStart + 1 }} - {{! props.pageStop +1 }} of {{! props.itemsLength }}
                         </template>
                     </v-data-table>
                 </v-card>
@@ -138,10 +150,12 @@
 
 <script>
     const api = {
-        getRoles: function() {
-            return axios.get('/core4/api/v1/roles?per_page=25&page=0').then(
+        getRoles: function(internalPagination) {
+            return axios.get('/core4/api/v1/roles' + internalPagination
+            )
+            .then(
                 function(result) {
-                    return result.data.data
+                    return result
                 })
         },
         deleteRole: function(role) {
@@ -161,10 +175,6 @@
             console.warn("updating role", role.name)
             return axios.post('/core4/api/v1/roles', role);
         },
-        searchRoles: function(search) {
-            console.log("searching for Role")
-            return axios.get('/core4/api/v1/roles/' + '?filter=' + search);
-        }
     }
     var app = new Vue({
         el: "#app",
@@ -173,12 +183,10 @@
                 headers: [{
                         text: 'Name',
                         align: 'left',
-                        sortable: false,
                         value: 'name'
                     }, {
                         text: 'Realname',
                         value: 'realname',
-                        sortable: false
                     }, {
                         text: 'Active',
                         value: 'is_active'
@@ -205,7 +213,14 @@
                 loading: false,
                 error: null,
                 searchData: null,
-                bigSearch: false
+                bigSearch: false,
+                pagination: {
+                    page: 1,
+                    rowsPerPage: 2,
+                    totalItems: 0,
+                    sortBy: "_id",
+                    descending: false,
+                }
             }
         },
         beforeCreate: function() {
@@ -214,11 +229,29 @@
         created: function() {},
         mounted: function() {
             document.querySelector('body').style.opacity = 1
-            api.getRoles().then(function(roles) {
-                this.roles = roles
+            api.getRoles(this.internalPagination).then(function(roles) {
+                console.log(this.pagination.page)
+                this.pagination.totalItems = roles.data.total_count
+                this.pagination.page = roles.data.page + 1
+                this.pagination.rowsPerPageItems = roles.data.per_page
+                this.roles = roles.data.data
             }.bind(this))
         },
         computed: {
+        internalPagination : function(){
+            ret =
+            "?per_page="+ this.pagination.rowsPerPage +
+            "&page=" + (this.pagination.page -1 )+
+            "&order=" + (this.pagination.descending ? -1:1) +
+            "&order_by=" + this.pagination.sortBy
+
+            if(this.searchData){
+                ret = ret + "&filter=" + this.searchData
+            }
+            return ret
+
+            }
+
         },
         watch: {
         },
@@ -279,23 +312,21 @@
                     return currentRole;
                 })
             },
-            search: function(){
-                this.loading = true;
-                console.log(this.searchData)
-                api.searchRoles(this.searchData)
-                    .then(function(success){
-                        console.log("WHYYYY")
-                        console.log(success);
-                        this.roles = success.data.data;
-                        this.loading = false;
-                        this.error = false;
-                    }.bind(this))
-                    .catch(function(error){
+            update: function() {
+                   this.loading = true;
+                   console.warn("updatePaging")
+                   api.getRoles(this.internalPagination).then(function(success) {
+                       this.pagination.totalItems = success.data.total_count
+                       this.roles = success.data.data
+                       this.loading = false;
+                   }.bind(this))
+                   .catch(function(error){
                         this.error = error.response.data.error.split("File")[0];
                         this.loading = false;
                     }.bind(this))
+
             }
-        }
+    }
     });
 
 </script>
