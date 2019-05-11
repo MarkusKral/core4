@@ -259,7 +259,14 @@ class RoleHandler(CoreRequestHandler):
 
             for doc in ret.body:
                 doc.pop("password", None)
-
+                if "role" in doc.keys():
+                    roles = []
+                    for parentrole in doc['role']:
+                        role = await CoreRole()\
+                            .find_one(_id=self.parse_objectid(doc["_id"]))
+                        role = await role.detail()
+                        roles.append({"name": role['name'], "_id": parentrole})
+                    doc['role'] = roles
             if self.wants_html():
                 return self.render("../standard/template/roles.js",
                                    roles=ret.body)

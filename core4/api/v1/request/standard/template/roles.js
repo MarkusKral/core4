@@ -71,7 +71,7 @@
                             </td>
                             <td class="text-xs-center">
                                  <div v-if="props.item.role.length" v-for="role in props.item.role">
-                                     {{! role }} </br>
+                                     {{! role['name'] }} </br>
                                  </div>
                             </td>
                             <td class="text-xs-center">
@@ -171,12 +171,10 @@
                 })
         },
         submitRole: function(role) {
-            console.log(role)
             console.warn("updating role", role.name)
             return axios.put('/core4/api/v1/roles/' + role._id, role);
         },
         createRole: function(role) {
-            console.log(role)
             console.warn("updating role", role.name)
             return axios.post('/core4/api/v1/roles', role);
         },
