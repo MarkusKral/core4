@@ -481,7 +481,7 @@ class CoreRole(CoreBase):
             (*proto, qn) = p.split("/")
             if proto[0] == "api:":
                 if re.match(qn, qual_name):
-                    return TrueG
+                    return True
         return False
 
     async def login(self):
@@ -571,13 +571,7 @@ class CoreRole(CoreBase):
             elif isinstance(v, list):
                 tmpl = []
                 for i in v:
-                    if isinstance(i, str):
-                        tempitem = await self.manage_dict_filter({"j": i})
-                        tmpl.append(tempitem["j"])
-                    elif isinstance(i, list):
-                        tempitem = await self.manage_dict_filter({"j": i})
-                        tmpl.append(tempitem["j"])
-                    else:
-                        tmpl.append(await self.manage_dict_filter(i))
+                    tempitem = await self.manage_dict_filter({"j": i})
+                    tmpl.append(tempitem["j"])
                 filter[k] = tmpl
         return filter
